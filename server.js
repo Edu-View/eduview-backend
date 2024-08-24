@@ -14,15 +14,14 @@ const PORT = process.env.PORT || 3500;
 // Connect to MongoDB
 connectDB();
 
+const corsOptions = {
+    origin: 'https://eduview.onrender.com',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true, // if you need to handle cookies
+    optionsSuccessStatus: 204
+};
 
-// Handle options credentials check - before CORS!
-// and fetch cookies credentials requirement
-app.use(credentials);
-
-// Cross Origin Resource Sharing
 app.use(cors(corsOptions));
-
-// built-in middleware to handle urlencoded form data
 app.use(express.urlencoded({ extended: false }));
 
 // built-in middleware for json 
