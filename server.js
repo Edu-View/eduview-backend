@@ -13,12 +13,10 @@ const PORT = process.env.PORT || 3500;
 
 // Connect to MongoDB
 connectDB();
-
 const corsOptions = {
     origin: 'https://eduview.onrender.com',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // if you need to handle cookies
-    optionsSuccessStatus: 204
+    credentials: true, // if you're dealing with cookies or authentication
 };
 
 app.use(cors(corsOptions));
