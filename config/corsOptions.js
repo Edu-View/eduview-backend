@@ -1,14 +1,20 @@
-const allowedOrigins = require('./allowedOrigins');
+// config/corsOptions.js
+const cors = require('cors');
+
+const allowedOrigins = [
+    'https://eduview.onrender.com', // Add your frontend URL here
+];
 
 const corsOptions = {
-    origin: (origin, callback) => {
-        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-            callback(null, true)
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));
         }
     },
-    optionsSuccessStatus: 200
-}
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+};
 
 module.exports = corsOptions;

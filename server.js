@@ -4,18 +4,13 @@ const app = express();
 const path = require('path');
 const cors = require('cors');
 const verifyJWT = require('./middleware/verifyJWT');
+const corsOptions = require('./config/corsOptions');
 const mongoose = require('mongoose');
 const connectDB = require('./config/dbConn');
 const PORT = process.env.PORT || 3500;
 
 // Connect to MongoDB
 connectDB();
-const corsOptions = {
-    origin: 'https://eduview.onrender.com',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // if you're dealing with cookies or authentication
-};
-
 app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: false }));
 
