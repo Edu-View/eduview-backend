@@ -34,6 +34,9 @@ app.use('/subject', require('./routes/subject'));
 app.use('/result', require('./routes/result'));
 app.use('/assessment', require('./routes/assessment'));
 
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
+});
 
 
 mongoose.connection.once('open', () => {
