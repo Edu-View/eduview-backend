@@ -34,13 +34,6 @@ app.use('/subject', require('./routes/subject'));
 app.use('/result', require('./routes/result'));
 app.use('/assessment', require('./routes/assessment'));
 
-app.use(verifyJWT);
-
-
-app.all('*', (req, res) => {
-    res.redirect('/');
-});
-
 
 
 mongoose.connection.once('open', () => {
