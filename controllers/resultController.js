@@ -1,26 +1,62 @@
-const ExamResult = require('../model/ExamResult');
+const cron = require('node-cron');
+const ExamResult = require('../model/ExamResult'); // Import your model
+
+// Function to schedule the result posting
+const scheduleResultPosting = (data, scheduledTime) => {
+    const now = new Date();
+    const delay = new Date(scheduledTime).getTime() - now.getTime();
+
+    if (delay > 0) {
+        setTimeout(async () => {
+            try {
+                const duplicate = await ExamResult.findOne({ rollno: data.rollno }).exec();
+                if (duplicate) {
+                    console.log('Duplicate found, not saving.');
+                    return;
+                }
+
+                const result = await ExamResult.create(data);
+                console.log(`Result for roll number ${data.rollno} created!`);
+            } catch (err) {
+                console.error('Error creating result:', err);
+            }
+        }, delay);
+    } else {
+        console.log('Scheduled time is in the past, executing immediately.');
+        createResultImmediately(data);
+    }
+};
+
+// Immediate execution in case the scheduled time is in the past
+const createResultImmediately = async (data) => {
+    try {
+        const duplicate = await ExamResult.findOne({ rollno: data.rollno }).exec();
+        if (duplicate) {
+            console.log('Duplicate found, not saving.');
+            return;
+        }
+
+        const result = await ExamResult.create(data);
+        console.log(`Result for roll number ${data.rollno} created immediately!`);
+    } catch (err) {
+        console.error('Error creating result:', err);
+    }
+};
 
 const addResult = async (req, res) => {
-    const { rollno, subjects, grading, gradeScore, semester } = req.body;
-    if (!rollno || !subjects || !grading || !gradeScore || !semester) return res.status(400).json({ 'message': 'Please fill all the required fields' });
+    const { rollno, subjects, grading, gradeScore, semester, scheduledTime } = req.body;
 
-    // check for duplicate usernames in the db
-    const duplicate = await ExamResult.findOne({ rollno }).exec();
-    if (duplicate) return res.sendStatus(409); //Conflict
-
-    try {
-        const result = await ExamResult.create({
-            "rollno": rollno,
-            "subjects": subjects,
-            "grading": grading,
-            "gradeScore": gradeScore,
-            "semester": semester
-        });
-        res.status(201).json({ 'success': `New Resultfor ${rollno} created!` });
-    } catch (err) {
-        res.status(500).json({ 'message': err.message });
+    // Validate required fields
+    if (!rollno || !subjects || !grading || !gradeScore || !semester || !scheduledTime) {
+        return res.status(400).json({ message: 'Please fill all the required fields' });
     }
-}
+
+    // Schedule the result posting
+    scheduleResultPosting({ rollno, subjects, grading, gradeScore, semester }, scheduledTime);
+
+    res.status(201).json({ success: `Result for roll number ${rollno} scheduled!` });
+};
+
 const getAllResult = async (req, res) => {
     const result = await ExamResult.find()
     if (!result) return res.status(204).json({ 'message': "No Result Found." })
