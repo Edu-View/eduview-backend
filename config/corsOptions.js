@@ -1,14 +1,14 @@
 // config/corsOptions.js
 const cors = require('cors');
 
-const allowedOrigins = [
+/* const allowedOrigins = [
     'http://localhost:3000', // Add your frontend URL here
-];
+]; */
 
-/* 
+
 const allowedOrigins = [
     'https://eduview.onrender.com', // Add your frontend URL here
-]; */
+];
 
 const corsOptions = {
     origin: function (origin, callback) {
