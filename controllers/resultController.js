@@ -1,6 +1,12 @@
 const cron = require('node-cron');
 const ExamResult = require('../model/ExamResult'); // Import your model
 
+const getAllResult = async (req, res) => {
+    const result = await ExamResult.find()
+    if (!result) return res.status(204).json({ 'message': "No Result Found." })
+    res.json(result)
+}
+
 // Function to schedule the result posting
 const scheduleResultPosting = (data, scheduledTime) => {
     const now = new Date();
@@ -16,7 +22,6 @@ const scheduleResultPosting = (data, scheduledTime) => {
                 }
 
                 const result = await ExamResult.create(data);
-                console.log(`Result for roll number ${data.rollno} created!`);
             } catch (err) {
                 console.error('Error creating result:', err);
             }
@@ -27,7 +32,6 @@ const scheduleResultPosting = (data, scheduledTime) => {
     }
 };
 
-// Immediate execution in case the scheduled time is in the past
 const createResultImmediately = async (data) => {
     try {
         const duplicate = await ExamResult.findOne({ rollno: data.rollno }).exec();
@@ -57,11 +61,7 @@ const addResult = async (req, res) => {
     res.status(201).json({ success: `Result for roll number ${rollno} scheduled!` });
 };
 
-const getAllResult = async (req, res) => {
-    const result = await ExamResult.find()
-    if (!result) return res.status(204).json({ 'message': "No Result Found." })
-    res.json(result)
-}
+
 
 const updateResult = async (req, res) => {
     if (!req?.body?.rollno) {
