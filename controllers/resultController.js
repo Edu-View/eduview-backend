@@ -63,37 +63,119 @@ const addResult = async (req, res) => {
 
 
 
+const scheduleResultUpdate = (data, scheduledTime) => {
+    const now = new Date();
+    const delay = new Date(scheduledTime).getTime() - now.getTime();
+
+    if (delay > 0) {
+        setTimeout(async () => {
+            try {
+                const examResult = await ExamResult.findOne({ rollno: data.rollno }).exec();
+                if (!examResult) {
+                    console.log(`No result found for roll number ${data.rollno}, not updating.`);
+                    return;
+                }
+
+                examResult.subjects = data.subjects;
+                examResult.grading = data.grading;
+                examResult.gradeScore = data.gradeScore;
+                const updatedResult = await examResult.save();
+            } catch (err) {
+                console.error('Error updating result:', err);
+            }
+        }, delay);
+    } else {
+
+        updateResultImmediately(data);
+    }
+};
+
+const updateResultImmediately = async (data) => {
+    try {
+        const examResult = await ExamResult.findOne({ rollno: data.rollno }).exec();
+        if (!examResult) {
+            console.log(`No result found for roll number ${data.rollno}, not updating.`);
+            return;
+        }
+
+        examResult.subjects = data.subjects;
+        examResult.grading = data.grading;
+        examResult.gradeScore = data.gradeScore;
+        const updatedResult = await examResult.save();
+
+        console.log(`Result for roll number ${data.rollno} updated immediately!`);
+    } catch (err) {
+        console.error('Error updating result:', err);
+    }
+};
+
 const updateResult = async (req, res) => {
-    if (!req?.body?.rollno) {
-        return res.status(400).json({ 'message': "rollno is required" })
+    const { rollno, subjects, grading, gradeScore, scheduledTime } = req.body;
+
+    // Validate required fields
+    if (!rollno || !subjects || !grading || !gradeScore || !scheduledTime) {
+        return res.status(400).json({ message: 'Please fill all the required fields' });
     }
-    const examResult = await ExamResult.findOne({ rollno: req.body.rollno }).exec()
 
-    if (!examResult) {
-        return res.status(204).json({ "message": `No result mathes ${req.body.rollno} ` });
+    // Schedule the result update
+    scheduleResultUpdate({ rollno, subjects, grading, gradeScore }, scheduledTime);
+
+    res.status(200).json({ success: `Update for roll number ${rollno} scheduled!` });
+};
+
+
+const scheduleDeleteResult = (rollno, scheduledTime) => {
+    const now = new Date();
+    const delay = new Date(scheduledTime).getTime() - now.getTime();
+
+    if (delay > 0) {
+        setTimeout(async () => {
+            try {
+                await ExamResult.deleteOne({ rollno: rollno }).exec();
+                console.log(`Result for roll number ${rollno} deleted!`);
+            } catch (err) {
+                console.error('Error deleting result:', err);
+            }
+        }, delay);
+    } else {
+        console.log('Scheduled time is in the past, deleting immediately.');
+        deleteResultImmediately(rollno);
     }
-    examResult.subjects = req.body.subjects;
-    examResult.grading = req.body.grading;
-    examResult.gradeScore = req.body.gradeScore;
+};
 
-
-
-    const result = await examResult.save()
-    res.json(result)
-}
+const deleteResultImmediately = async (rollno) => {
+    try {
+        await ExamResult.deleteOne({ rollno: rollno }).exec();
+        console.log(`Result for roll number ${rollno} deleted immediately!`);
+    } catch (err) {
+        console.error('Error deleting result:', err);
+    }
+};
 
 const deleteResult = async (req, res) => {
-    if (!req?.body?.rollno) {
-        return res.status(400).json({ 'message': "roll no is required" })
+    const { rollno, scheduledTime } = req.body;
+
+    if (!rollno) {
+        return res.status(400).json({ message: 'Roll number is required' });
     }
-    const examResult = await ExamResult.findOne({ rollno: req.body.rollno }).exec()
+
+    const examResult = await ExamResult.findOne({ rollno }).exec();
 
     if (!examResult) {
-        return res.status(204).json({ "message": `No result mathes ${req.body.rollno} ` });
+        return res.status(204).json({ message: `No result matches roll number ${rollno}.` });
     }
-    const result = await examResult.deleteOne({ rollno: req.body.rollno })
-    res.json(result);
-}
+
+    if (scheduledTime) {
+        // Schedule the deletion
+        scheduleDeleteResult(rollno, scheduledTime);
+        return res.status(200).json({ success: `Deletion for roll number ${rollno} scheduled!` });
+    } else {
+        // Delete immediately if no scheduled time is provided
+        await deleteResultImmediately(rollno);
+        return res.status(200).json({ success: `Result for roll number ${rollno} deleted immediately!` });
+    }
+};
+
 
 const deleteAllResult = async (req, res) => {
     try {
